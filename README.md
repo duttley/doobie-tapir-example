@@ -12,7 +12,8 @@ $ psql -d world -c "create extension postgis" -U postgres
 ```
 
 ## Run
+Just run the Server.scala in Intellij.
 
 ## Usage
-Click on the link below to the Swagger configuration where you can run and 
+Once running click on the link below to the Swagger docs where you can run and tests your the endpoints. 
 http://localhost:8080/docs
