@@ -37,7 +37,14 @@ trait CountryDao[F[_]] {
 class CountryDaoImpl[F[_] : Async](xa: Transactor[F]) extends CountryDao[F] {
 
   override def get(): Stream[F, Country] = {
-    sql"select code, name, continent, region, surfacearea, indepyear, population, lifeexpectancy, gnp, gnpold, localname, governmentform, headofstate, capital, code2 from country"
+    sql"""
+         |select code, name, continent,
+         |region, surfacearea, indepyear,
+         |population, lifeexpectancy, gnp,
+         |gnpold, localname, governmentform,
+         |headofstate, capital, code2
+         |from country
+         |""".stripMargin
       .query[Country]
       .stream
       .transact(xa)

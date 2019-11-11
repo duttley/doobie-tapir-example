@@ -40,6 +40,7 @@ object Server extends IOApp with CountryEndpoints {
               "/docs" -> swagger).orNotFound)
           .serve
       } yield server
+
       server.compile.lastOrError
     }
   }
