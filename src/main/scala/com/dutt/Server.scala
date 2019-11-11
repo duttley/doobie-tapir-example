@@ -16,12 +16,13 @@ object Server extends IOApp with CountryEndpoints {
   val countryLogic = new CountryEndpointLogic(new CountryDaoImpl(CountryDao.xa))
 
   // mandatory implicits
-  val docs: String = List(getCountries).toOpenAPI("The Tapir Library", "1.0").toYaml
+  val docs: String = List(getCountries, getCountry).toOpenAPI("The Tapir Library", "1.0").toYaml
 
   // add to your akka routes
   private val swagger = new SwaggerHttp4s(docs).routes
 
-  val getCountriesRoutes: HttpRoutes[IO] = getCountries.toRoutes(countryLogic.getCountryLogic)
+  val getCountriesRoutes: HttpRoutes[IO] = getCountries.toRoutes(countryLogic.getCountriesLogic)
+  val getCountryRoutes: HttpRoutes[IO] = getCountry.toRoutes(countryLogic.getCountryLogic)
 
   // starting the server
   override def run(args: List[String]): IO[ExitCode] = {
@@ -31,6 +32,7 @@ object Server extends IOApp with CountryEndpoints {
       .withHttpApp(
         Router(
           "/" -> getCountriesRoutes,
+          "/" -> getCountryRoutes,
           "/docs" -> swagger).orNotFound)
       .serve
       .compile
