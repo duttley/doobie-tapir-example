@@ -18,9 +18,8 @@ import tapir.swagger.http4s.SwaggerHttp4s
 object Server extends IOApp with CountryEndpoints {
 
   // mandatory implicits
-  val docs: String = List(getCountries).toOpenAPI("The Tapir Library", "1.0").toYaml
+  val docs: String = List(getCountries, getCountry).toOpenAPI("The World!", "1.0").toYaml
 
-  // add to your akka routes
   private val swagger = new SwaggerHttp4s(docs).routes
 
   private val config = Config.load()
@@ -30,11 +29,14 @@ object Server extends IOApp with CountryEndpoints {
     Database.transactor(config.database).use { xa =>
       val logic = new CountryEndpointLogic(new CountryDaoImpl(xa))
       val server = for {
+        //DB Migrations
+        _ <- Stream.eval(Database.initialize(xa))
         server <- BlazeServerBuilder[IO]
           .bindHttp(config.server.port, config.server.host)
           .withHttpApp(
             Router(
-              "/" -> getCountries.toRoutes(logic.getCountryLogic),
+              "/" -> getCountries.toRoutes(logic.getCountriesLogic),
+              "/" -> getCountry.toRoutes(logic.getCountryLogic),
               "/docs" -> swagger).orNotFound)
           .serve
       } yield server

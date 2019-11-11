@@ -31,6 +31,7 @@ object Database {
     transactor.configure { dataSource =>
       IO {
         val flyWay = Flyway.configure().dataSource(dataSource).load()
+        //flyWay.baseline()
         flyWay.migrate()
         ()
       }

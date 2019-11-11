@@ -21,4 +21,6 @@ package object dutt {
 
 
 //  code2 character(2) NOT NULL
+
+  case object NotFound
 }

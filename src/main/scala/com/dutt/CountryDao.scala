@@ -27,8 +27,8 @@ object CountryDao {
 }
 
 trait CountryDao[F[_]] {
-  def get(id: String): F[Country]
-  def get(): Stream[F, Country]
+  def get(id: String): F[Option[Country]]
+  def get: Stream[F, Country]
   def update(country: Country): F[Country]
   def insert(country: Country): F[Country]
 }
@@ -39,10 +39,16 @@ class CountryDaoImpl[F[_] : Async](xa: Transactor[F]) extends CountryDao[F] {
   override def get(): Stream[F, Country] = {
     sql"select code, name, continent, region, surfacearea, indepyear, population, lifeexpectancy, gnp, gnpold, localname, governmentform, headofstate, capital, code2 from country"
       .query[Country]
-      .stream.transact(xa)
+      .stream
+      .transact(xa)
   }
 
-  override def get(id: String): F[Country] = ???
+  override def get(id: String): F[Option[Country]] = {
+    sql"select * from country where code = $id"
+      .query[Country]
+      .option
+      .transact(xa)
+  }
 
   override def update(country: Country): F[Country] = ???
 
