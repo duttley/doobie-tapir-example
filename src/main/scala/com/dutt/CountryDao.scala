@@ -8,6 +8,7 @@ import cats.effect._
 import cats.implicits._
 import com.dutt.CountryDao.xa
 import doobie.util.ExecutionContexts
+import doobie.util.transactor.Transactor
 import doobie.util.transactor.Transactor.Aux
 import fs2.Stream
 
@@ -33,11 +34,11 @@ trait CountryDao[F[_]] {
 }
 
 
-class CountryDaoImpl[F[_] : Async](xa: Aux[F, Unit]) extends CountryDao[F] {
+class CountryDaoImpl[F[_] : Async](xa: Transactor[F]) extends CountryDao[F] {
 
   override def get(): Stream[F, Country] = {
-    sql"select code, name, continent from country"
-      .query[Country]    // Query0[String]
+    sql"select code, name, continent, region, surfacearea, indepyear, population, lifeexpectancy, gnp, gnpold, localname, governmentform, headofstate, capital, code2 from country"
+      .query[Country]
       .stream.transact(xa)
   }
 
