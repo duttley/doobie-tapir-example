@@ -29,8 +29,8 @@ object CountryDao {
 trait CountryDao[F[_]] {
   def get(id: String): F[Option[Country]]
   def get: Stream[F, Country]
-  def update(country: Country): F[Country]
-  def insert(country: Country): F[Country]
+  def update(country: Country): F[Int]
+  def insert(country: Country): F[Int]
 }
 
 
@@ -44,7 +44,8 @@ class CountryDaoImpl[F[_] : Async](xa: Transactor[F]) extends CountryDao[F] {
          |gnpold, localname, governmentform,
          |headofstate, capital, code2
          |from country
-         |""".stripMargin
+         |"""
+      .stripMargin
       .query[Country]
       .stream
       .transact(xa)
@@ -57,7 +58,16 @@ class CountryDaoImpl[F[_] : Async](xa: Transactor[F]) extends CountryDao[F] {
       .transact(xa)
   }
 
-  override def update(country: Country): F[Country] = ???
+  override def update(country: Country): F[Int] = ???
 
-  override def insert(country: Country): F[Country] = ???
+  override def insert(c: Country): F[Int] = {
+    sql"""
+         |insert into country (name, code, region, population)
+         |values ($c.name, $c.code, $c.region, $c.population)
+         |"""
+      .stripMargin
+      .update
+      .withUniqueGeneratedKeys[Int]("id")
+      .transact(xa)
+  }
 }
