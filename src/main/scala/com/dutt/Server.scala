@@ -15,7 +15,7 @@ import tapir.openapi.circe.yaml._
 import tapir.server.http4s._
 import tapir.swagger.http4s.SwaggerHttp4s
 
-object Server extends IOApp with CountryEndpoints {
+object Server extends IOApp with CountryEndpoints[IO] {
 
   // mandatory implicits
   val docs: String = List(getCountries, getCountry).toOpenAPI("The World!", "1.0").toYaml
@@ -27,7 +27,7 @@ object Server extends IOApp with CountryEndpoints {
   // starting the server
   override def run(args: List[String]): IO[ExitCode] = {
     Database.transactor(config.database).use { xa =>
-      val logic = new CountryEndpointLogic(new CountryDaoImpl(xa))
+      val logic = new CountryEndpointLogic[IO](new CountryDaoImpl[IO](xa))
       val server = for {
         //DB Migrations
         _ <- Stream.eval(Database.initialize(xa))

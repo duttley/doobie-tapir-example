@@ -1,6 +1,7 @@
 package com.dutt
 
 import akka.http.scaladsl.model.HttpHeader.ParsingResult.Ok
+import cats.Applicative
 import cats.effect.IO
 import cats.implicits._
 import com.softwaremill.sttp.StringBody
@@ -18,14 +19,14 @@ import tapir.model.StatusCodes
 
 
 // FRONTEND ENDPOINTS
-trait CountryEndpoints {
+trait CountryEndpoints[F[_]] {
 
-  val getCountries: Endpoint[Unit, Unit, Stream[IO, Byte], Stream[IO, Byte]] =
+  val getCountries: Endpoint[Unit, Unit, Stream[F, Byte], Stream[F, Byte]] =
     endpoint
       .get
       .name("getCountries")
       .in("countries")
-      .out(streamBody[Stream[IO, Byte]](schemaFor[Byte], tapir.MediaType.Json()))
+      .out(streamBody[Stream[F, Byte]](schemaFor[Byte], tapir.MediaType.Json()))
 
   val getCountry: Endpoint[String, Int, Country, Nothing] =
     endpoint
@@ -39,14 +40,15 @@ trait CountryEndpoints {
 }
 
 // LOGIC TO MAP FRONTEND TO BACKEND
-class CountryEndpointLogic(dao: CountryDao[IO]) {
+class CountryEndpointLogic[F[_] : Applicative](dao: CountryDao[F]) {
 
-  def getCountriesLogic(a: Unit): IO[Either[Unit, Stream[IO, Byte]]] = {
-    val s: Stream[IO, String] = Stream("[") ++ dao.get.map(_.asJson.noSpaces).intersperse(",") ++ Stream("]")
-    IO(Right(s.through(fs2.text.utf8Encode)))
+  def getCountriesLogic(a: Unit): F[Either[Unit, Stream[F, Byte]]] = {
+    val s = Stream("[") ++ dao.get.map(_.asJson.noSpaces).intersperse(",") ++ Stream("]")
+    val ret: Either[Unit, Stream[F, Byte]] = Right(s.through(fs2.text.utf8Encode))
+    ret.pure[F]
   }
 
-  def getCountryLogic(a: String): IO[Either[Int, Country]] = {
+  def getCountryLogic(a: String): F[Either[Int, Country]] = {
     dao.get(a).map{
       case Some(f) => Right(f)
       case None => Left(StatusCodes.NotFound)
