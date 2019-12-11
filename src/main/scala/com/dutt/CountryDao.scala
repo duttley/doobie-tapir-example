@@ -60,14 +60,19 @@ class CountryDaoImpl[F[_] : Async](xa: Transactor[F]) extends CountryDao[F] {
 
   override def update(country: Country): F[Int] = ???
 
-  override def insert(c: Country): F[Int] = {
-    sql"""
+  override def insert(c: Country): F[Option[Country]] = {
+    val ret = sql"""
          |insert into country (name, code, region, population)
          |values ($c.name, $c.code, $c.region, $c.population)
          |"""
       .stripMargin
       .update
-      .withUniqueGeneratedKeys[Int]("id")
+      .run
       .transact(xa)
+
+    ret.map{
+      case 1 => Some(c)
+      case _ => None
+    }
   }
 }
