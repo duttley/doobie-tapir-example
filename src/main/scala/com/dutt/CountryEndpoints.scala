@@ -32,11 +32,18 @@ trait CountryEndpoints[F[_]] {
     endpoint
       .get
       .name("getCountry")
-      .in("countries")
-      .in(path[String]("code"))
+      .in("countries" / path[String]("code"))
       .out(jsonBody[Country])
       .errorOut(statusCode)
 
+  val postCountry: Endpoint[Country, Int, Int, Nothing] =
+    endpoint
+    .post
+    .name("postCountry")
+    .in("countries")
+    .in(jsonBody[Country])
+    .out(statusCode)
+    .errorOut(statusCode)
 }
 
 // LOGIC TO MAP FRONTEND TO BACKEND
@@ -54,4 +61,8 @@ class CountryEndpointLogic[F[_] : Applicative](dao: CountryDao[F]) {
       case None => Left(StatusCodes.NotFound)
     }
   }
+
+  def postCountryLogic(a: Country): IO[Int] = {
+    dao.insert(a)
+    }
 }
